@@ -4,7 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -16,15 +22,44 @@ const Auth = () => {
   const [password, setPassword] = useState("");
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const checkUserAndRedirect = async (session: any) => {
+      if (!session) return;
+
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", session.user.id)
+        .maybeSingle();
+
+      console.log(data);
+      if (!data?.role) {
+        // Usuário ainda não tem role, redireciona para escolha
+        navigate("/");
+        return;
+      }
+
+      // Redireciona baseado no role
+      if (data.role === "professional") {
         navigate("/dashboard");
+      } else if (data.role === "student") {
+        navigate("/minhas-turmas");
+      } else {
+        navigate("/");
+      }
+    };
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session) {
+        checkUserAndRedirect(session);
       }
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        navigate("/dashboard");
+        checkUserAndRedirect(session);
       }
     });
 
@@ -39,8 +74,8 @@ const Auth = () => {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/dashboard`
-      }
+        emailRedirectTo: `${window.location.origin}/dashboard`,
+      },
     });
 
     if (error) {

@@ -1,10 +1,23 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DollarSign, Users, MapPin, Clock, TrendingUp, BookOpen } from "lucide-react";
+import {
+  DollarSign,
+  Users,
+  MapPin,
+  Clock,
+  TrendingUp,
+  BookOpen,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Professional {
@@ -40,7 +53,9 @@ const Dashboard = () => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
         navigate("/auth");
         return;
@@ -66,13 +81,15 @@ const Dashboard = () => {
 
   const loadData = async (professionalId: string) => {
     setLoading(true);
-    
+
     const { data: classesData } = await supabase
       .from("classes")
-      .select(`
+      .select(
+        `
         *,
         enrollments:enrollments(count)
-      `)
+      `
+      )
       .eq("professional_id", professionalId);
 
     const { data: demandsData } = await supabase
@@ -91,19 +108,19 @@ const Dashboard = () => {
   };
 
   const createClassFromDemand = (demand: Demand) => {
-    navigate("/cadastrar-aulas", { 
-      state: { 
+    navigate("/cadastrar-aulas", {
+      state: {
         demandId: demand.id,
         activity: demand.activity,
         schedule: demand.schedule,
         location: demand.location,
-      } 
+      },
     });
   };
 
   const totalRevenue = classes.reduce((sum, cls) => {
     const students = cls.enrollments[0]?.count || 0;
-    return sum + (cls.price * students);
+    return sum + cls.price * students;
   }, 0);
 
   const totalStudents = classes.reduce((sum, cls) => {
@@ -136,11 +153,15 @@ const Dashboard = () => {
         <div className="grid md:grid-cols-3 gap-6 mb-8">
           <Card className="shadow-soft">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Receita Total</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Receita Total
+              </CardTitle>
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">R$ {totalRevenue.toFixed(2)}</div>
+              <div className="text-2xl font-bold">
+                R$ {totalRevenue.toFixed(2)}
+              </div>
               <p className="text-xs text-muted-foreground mt-1">
                 Acumulado de todas as turmas
               </p>
@@ -149,20 +170,24 @@ const Dashboard = () => {
 
           <Card className="shadow-soft">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Total de Alunos</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Total de Alunos
+              </CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{totalStudents}</div>
               <p className="text-xs text-muted-foreground mt-1">
-                Em {classes.length} turma{classes.length !== 1 ? 's' : ''}
+                Em {classes.length} turma{classes.length !== 1 ? "s" : ""}
               </p>
             </CardContent>
           </Card>
 
           <Card className="shadow-soft">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Demandas Ativas</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Demandas Ativas
+              </CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -185,7 +210,9 @@ const Dashboard = () => {
             {classes.length === 0 ? (
               <Card>
                 <CardContent className="py-8 text-center">
-                  <p className="text-muted-foreground mb-4">Você ainda não tem turmas cadastradas.</p>
+                  <p className="text-muted-foreground mb-4">
+                    Você ainda não tem turmas cadastradas.
+                  </p>
                   <Button onClick={() => navigate("/cadastrar-aulas")}>
                     Cadastrar Primeira Turma
                   </Button>
@@ -193,8 +220,11 @@ const Dashboard = () => {
               </Card>
             ) : (
               classes.map((cls) => (
-                <Card key={cls.id} className="shadow-soft hover:shadow-medium transition-shadow cursor-pointer"
-                  onClick={() => navigate(`/turma/${cls.id}`)}>
+                <Card
+                  key={cls.id}
+                  className="shadow-soft hover:shadow-medium transition-shadow cursor-pointer"
+                  onClick={() => navigate(`/turma/${cls.id}`)}
+                >
                   <CardHeader>
                     <CardTitle className="flex items-center justify-between">
                       <span>{cls.activity}</span>
@@ -240,7 +270,10 @@ const Dashboard = () => {
                     <Clock className="w-4 h-4 mr-2" />
                     {demand.schedule}
                   </div>
-                  <Button onClick={() => createClassFromDemand(demand)} className="w-full mt-4">
+                  <Button
+                    onClick={() => createClassFromDemand(demand)}
+                    className="w-full mt-4"
+                  >
                     Criar Turma
                   </Button>
                 </CardContent>
@@ -257,7 +290,8 @@ const Dashboard = () => {
                 {classes.map((cls) => {
                   const students = cls.enrollments[0]?.count || 0;
                   const revenue = cls.price * students;
-                  const percentage = totalRevenue > 0 ? (revenue / totalRevenue) * 100 : 0;
+                  const percentage =
+                    totalRevenue > 0 ? (revenue / totalRevenue) * 100 : 0;
 
                   return (
                     <div key={cls.id} className="space-y-2">
@@ -268,7 +302,7 @@ const Dashboard = () => {
                         </span>
                       </div>
                       <div className="w-full bg-secondary rounded-full h-2">
-                        <div 
+                        <div
                           className="bg-primary rounded-full h-2 transition-all"
                           style={{ width: `${percentage}%` }}
                         />

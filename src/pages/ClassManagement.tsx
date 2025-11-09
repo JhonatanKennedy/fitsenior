@@ -1,20 +1,26 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import { ArrowLeft, MessageSquare, ClipboardList, Send } from "lucide-react";
 import { format } from "date-fns";
@@ -67,19 +73,22 @@ const ClassManagement = () => {
   const loadStudents = async () => {
     const { data: enrollments } = await supabase
       .from("enrollments")
-      .select(`
+      .select(
+        `
         id,
         student_id,
         profiles:student_id (
           id,
           full_name
         )
-      `)
+      `
+      )
       .eq("class_id", id)
       .eq("status", "active");
 
     if (enrollments) {
       const studentsWithAbsences = await Promise.all(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         enrollments.map(async (enrollment: any) => {
           const { count } = await supabase
             .from("attendance")
@@ -138,8 +147,8 @@ const ClassManagement = () => {
 
     const { error } = await supabase
       .from("attendance")
-      .upsert(attendanceRecords, { 
-        onConflict: "enrollment_id,date" 
+      .upsert(attendanceRecords, {
+        onConflict: "enrollment_id,date",
       });
 
     if (error) {
@@ -161,16 +170,16 @@ const ClassManagement = () => {
   const handleSendMessage = async () => {
     if (!newMessage.trim()) return;
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) return;
 
-    const { error } = await supabase
-      .from("forum_messages")
-      .insert({
-        class_id: id,
-        user_id: user.id,
-        message: newMessage,
-      });
+    const { error } = await supabase.from("forum_messages").insert({
+      class_id: id,
+      user_id: user.id,
+      message: newMessage,
+    });
 
     if (error) {
       toast({
@@ -195,7 +204,11 @@ const ClassManagement = () => {
   return (
     <div className="min-h-screen bg-gradient-hero">
       <div className="container mx-auto px-4 py-8">
-        <Button variant="ghost" onClick={() => navigate("/dashboard")} className="mb-6">
+        <Button
+          variant="ghost"
+          onClick={() => navigate("/dashboard")}
+          className="mb-6"
+        >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Voltar ao Dashboard
         </Button>
@@ -305,9 +318,13 @@ const ClassManagement = () => {
                         {msg.profiles?.full_name || "Usuário"}
                       </CardTitle>
                       <span className="text-sm text-muted-foreground">
-                        {format(new Date(msg.created_at), "dd/MM/yyyy 'às' HH:mm", {
-                          locale: ptBR,
-                        })}
+                        {format(
+                          new Date(msg.created_at),
+                          "dd/MM/yyyy 'às' HH:mm",
+                          {
+                            locale: ptBR,
+                          }
+                        )}
                       </span>
                     </div>
                   </CardHeader>

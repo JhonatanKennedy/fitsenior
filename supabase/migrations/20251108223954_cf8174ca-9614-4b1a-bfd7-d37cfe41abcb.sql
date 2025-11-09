@@ -15,6 +15,20 @@ CREATE POLICY "Users can update their own profile"
   ON public.profiles FOR UPDATE
   USING (auth.uid() = id);
 
+-- Trigger para criar profile automaticamente
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.profiles (id, full_name)
+  VALUES (NEW.id, NEW.raw_user_meta_data->>'full_name');
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
 -- Create enum for user roles
 CREATE TYPE public.app_role AS ENUM ('professional', 'student', 'admin');
 
@@ -47,6 +61,11 @@ CREATE POLICY "Users can view their own roles"
   ON public.user_roles FOR SELECT
   USING (auth.uid() = user_id);
 
+-- FIX: Allow users to insert their own roles
+CREATE POLICY "Users can insert their own roles"
+  ON public.user_roles FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
 -- Create professionals table
 CREATE TABLE public.professionals (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -65,6 +84,11 @@ CREATE POLICY "Professionals can view their own data"
   ON public.professionals FOR SELECT
   USING (auth.uid() = user_id);
 
+CREATE POLICY "Authenticated users can view professional profiles"
+  ON public.professionals FOR SELECT
+  TO authenticated
+  USING (true);
+
 CREATE POLICY "Professionals can update their own data"
   ON public.professionals FOR UPDATE
   USING (auth.uid() = user_id);
@@ -72,6 +96,35 @@ CREATE POLICY "Professionals can update their own data"
 CREATE POLICY "Professionals can insert their own data"
   ON public.professionals FOR INSERT
   WITH CHECK (auth.uid() = user_id);
+
+-- Create students table
+CREATE TABLE public.students (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL UNIQUE,
+  full_name TEXT NOT NULL,
+  gender TEXT NOT NULL,
+  phone TEXT NOT NULL,
+  email TEXT NOT NULL,
+  cpf TEXT NOT NULL UNIQUE,
+  address TEXT NOT NULL,
+  birth_date DATE NOT NULL,
+  health_certificate_url TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+);
+
+ALTER TABLE public.students ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Students can view their own data"
+  ON public.students FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Students can insert their own data"
+  ON public.students FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Students can update their own data"
+  ON public.students FOR UPDATE
+  USING (auth.uid() = user_id);
 
 -- Create demands table
 CREATE TABLE public.demands (
@@ -138,6 +191,10 @@ CREATE POLICY "Students can view their enrollments"
   ON public.enrollments FOR SELECT
   USING (auth.uid() = student_id);
 
+CREATE POLICY "Students can enroll in classes"
+  ON public.enrollments FOR INSERT
+  WITH CHECK (auth.uid() = student_id);
+
 CREATE POLICY "Professionals can view enrollments in their classes"
   ON public.enrollments FOR SELECT
   USING (
@@ -177,7 +234,7 @@ CREATE POLICY "Professionals can manage attendance for their classes"
 CREATE TABLE public.forum_messages (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   class_id UUID REFERENCES public.classes(id) ON DELETE CASCADE NOT NULL,
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
   message TEXT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT now()
 );
@@ -245,8 +302,49 @@ CREATE POLICY "Professionals can view payments for their classes"
     )
   );
 
--- Insert some sample demands
+-- Allow professionals to view students in their classes
+CREATE POLICY "Professionals can view students in their classes"
+  ON public.students FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM enrollments e
+      JOIN classes c ON c.id = e.class_id
+      JOIN professionals p ON p.id = c.professional_id
+      WHERE e.student_id = students.user_id
+      AND p.user_id = auth.uid()
+    )
+  );
+
+-- Create storage bucket for health certificates
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('health-certificates', 'health-certificates', false)
+ON CONFLICT (id) DO NOTHING;
+
+-- Storage policies for health certificates
+CREATE POLICY "Users can upload their own health certificate"
+  ON storage.objects FOR INSERT
+  WITH CHECK (
+    bucket_id = 'health-certificates' 
+    AND auth.uid()::text = (storage.foldername(name))[1]
+  );
+
+CREATE POLICY "Users can view their own health certificate"
+  ON storage.objects FOR SELECT
+  USING (
+    bucket_id = 'health-certificates' 
+    AND auth.uid()::text = (storage.foldername(name))[1]
+  );
+
+CREATE POLICY "Users can update their own health certificate"
+  ON storage.objects FOR UPDATE
+  USING (
+    bucket_id = 'health-certificates' 
+    AND auth.uid()::text = (storage.foldername(name))[1]
+  );
+
+-- Insert sample demands
 INSERT INTO public.demands (activity, neighborhood, schedule, num_interested, location) VALUES
   ('Yoga', 'Centro', 'Segunda e Quarta, 8h às 9h', 12, 'Parque Central'),
   ('Pilates', 'Jardim das Flores', 'Terça e Quinta, 15h às 16h', 8, 'Academia FlexFit'),
   ('Hidroginástica', 'Vila Nova', 'Segunda, Quarta e Sexta, 10h às 11h', 15, 'Clube Aquático')
+ON CONFLICT DO NOTHING;
