@@ -11,6 +11,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
 import { MapPin, Clock, Users, Bell, BellOff } from "lucide-react";
 
 const MyClasses = () => {
@@ -25,6 +26,11 @@ const MyClasses = () => {
   useEffect(() => {
     fetchEnrolledClasses();
   }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/");
+  };
 
   const fetchEnrolledClasses = async () => {
     try {
@@ -104,11 +110,16 @@ const MyClasses = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background py-12 px-4">
       <div className="container max-w-6xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Minhas Turmas</h1>
-          <p className="text-muted-foreground">
-            Turmas em que você está matriculado
-          </p>
+        <div className="max-w flex justify-between">
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold mb-2">Minhas Turmas</h1>
+            <p className="text-muted-foreground">
+              Turmas em que você está matriculado
+            </p>
+          </div>
+          <Button variant="outline" onClick={handleLogout}>
+            Sair
+          </Button>
         </div>
 
         {enrolledClasses.length === 0 ? (
@@ -131,10 +142,12 @@ const MyClasses = () => {
               <Card
                 key={classItem.id}
                 className="cursor-pointer hover:shadow-lg transition-all duration-200"
-                onClick={() => navigate(`/turma-aluno/${classItem.id}`)}
               >
                 <CardHeader>
-                  <CardTitle className="flex items-start justify-between">
+                  <CardTitle
+                    onClick={() => navigate(`/turma-aluno/${classItem.id}`)}
+                    className="flex items-start justify-between"
+                  >
                     <span className="hover:text-primary transition-colors">
                       {classItem.activity}
                     </span>

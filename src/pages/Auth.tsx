@@ -32,7 +32,6 @@ const Auth = () => {
         .eq("user_id", session.user.id)
         .maybeSingle();
 
-      console.log(data);
       if (!data?.role) {
         // Usuário ainda não tem role, redireciona para escolha
         navigate("/");
@@ -74,7 +73,7 @@ const Auth = () => {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/dashboard`,
+        emailRedirectTo: `${window.location.origin}`,
       },
     });
 
