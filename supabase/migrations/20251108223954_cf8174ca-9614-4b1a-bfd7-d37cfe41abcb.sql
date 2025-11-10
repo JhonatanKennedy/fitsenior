@@ -15,13 +15,20 @@ CREATE POLICY "Users can update their own profile"
   ON public.profiles FOR UPDATE
   USING (auth.uid() = id);
 
+CREATE POLICY "Users can insert their own profile"
+  ON public.profiles FOR INSERT
+  WITH CHECK (auth.uid() = id);
+
 -- Trigger para criar profile automaticamente
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
   INSERT INTO public.profiles (id, full_name)
-  VALUES (NEW.id, NEW.raw_user_meta_data->>'full_name');
+  VALUES (NEW.id, COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.email));
   RETURN NEW;
+EXCEPTION
+  WHEN others THEN
+    RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
@@ -61,7 +68,6 @@ CREATE POLICY "Users can view their own roles"
   ON public.user_roles FOR SELECT
   USING (auth.uid() = user_id);
 
--- FIX: Allow users to insert their own roles
 CREATE POLICY "Users can insert their own roles"
   ON public.user_roles FOR INSERT
   WITH CHECK (auth.uid() = user_id);
@@ -347,4 +353,4 @@ INSERT INTO public.demands (activity, neighborhood, schedule, num_interested, lo
   ('Yoga', 'Centro', 'Segunda e Quarta, 8h às 9h', 12, 'Parque Central'),
   ('Pilates', 'Jardim das Flores', 'Terça e Quinta, 15h às 16h', 8, 'Academia FlexFit'),
   ('Hidroginástica', 'Vila Nova', 'Segunda, Quarta e Sexta, 10h às 11h', 15, 'Clube Aquático')
-ON CONFLICT DO NOTHING;
+ON CONFLICT DO NOTHING
