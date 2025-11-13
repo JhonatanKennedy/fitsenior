@@ -12,7 +12,14 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { MapPin, Clock, Users, Bell, BellOff } from "lucide-react";
+import {
+  MapPin,
+  Clock,
+  Users,
+  Bell,
+  BellOff,
+  MessageCircle,
+} from "lucide-react";
 
 const MyClasses = () => {
   const navigate = useNavigate();
@@ -151,13 +158,6 @@ const MyClasses = () => {
                     <span className="hover:text-primary transition-colors">
                       {classItem.activity}
                     </span>
-                    <div className="flex items-center gap-2 ml-2">
-                      {notifications[classItem.id] ? (
-                        <Bell className="h-5 w-5 text-primary" />
-                      ) : (
-                        <BellOff className="h-5 w-5 text-muted-foreground" />
-                      )}
-                    </div>
                   </CardTitle>
                   <CardDescription className="line-clamp-2">
                     {classItem.description || "Sem descrição"}
@@ -173,22 +173,19 @@ const MyClasses = () => {
                     <span>{classItem.location}</span>
                   </div>
 
-                  <div className="pt-4 border-t">
-                    <div className="flex items-center justify-between">
-                      <Label
-                        htmlFor={`notif-${classItem.id}`}
-                        className="text-sm cursor-pointer"
-                      >
-                        Notificações
-                      </Label>
-                      <Switch
-                        id={`notif-${classItem.id}`}
-                        checked={notifications[classItem.id]}
-                        onCheckedChange={() =>
-                          toggleNotifications(classItem.id)
-                        }
-                      />
-                    </div>
+                  <div className="pt-4 border-t space-y-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate("/chat");
+                      }}
+                    >
+                      <MessageCircle className="h-4 w-4 mr-2" />
+                      Chat com Professor
+                    </Button>
                   </div>
                 </CardContent>
               </Card>

@@ -239,6 +239,30 @@ export type Database = {
           }
         ];
       };
+      private_messages: {
+        Row: {
+          created_at: string;
+          id: string;
+          message: string;
+          recipient_id: string;
+          sender_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          message: string;
+          recipient_id: string;
+          sender_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          message?: string;
+          recipient_id?: string;
+          sender_id?: string;
+        };
+        Relationships: [];
+      };
       professionals: {
         Row: {
           avatar_url: string | null;

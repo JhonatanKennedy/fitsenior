@@ -29,6 +29,7 @@ import {
   Send,
   BarChart3,
   Calendar,
+  MessageCircle,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -463,13 +464,14 @@ const ClassManagement = () => {
                       <TableHead className="text-center">
                         % Frequência
                       </TableHead>
+                      <TableHead className="text-center">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {frequencyData.length === 0 ? (
                       <TableRow>
                         <TableCell
-                          colSpan={5}
+                          colSpan={6}
                           className="text-center text-muted-foreground py-8"
                         >
                           Nenhum registro de frequência ainda
@@ -501,6 +503,18 @@ const ClassManagement = () => {
                             >
                               {student.attendance_rate.toFixed(1)}%
                             </Badge>
+                          </TableCell>
+
+                          <TableCell className="text-center">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                navigate(`/chat?contact=${student.id}`)
+                              }
+                            >
+                              <MessageCircle className="h-4 w-4" />
+                            </Button>
                           </TableCell>
                         </TableRow>
                       ))

@@ -17,12 +17,14 @@ const Header = () => {
   const navItemsStudents = [
     { path: "/buscar-aulas", label: "Buscar Aulas" },
     { path: "/perfil", label: "Perfil" },
+    { path: "/chat", label: "Mensagens" },
   ];
 
   const navItemsProfessionals = [
     { path: "/cadastrar-aulas", label: "Cadastrar aula" },
     { path: "/dashboard", label: "Dashboard" },
     { path: "/perfil", label: "Perfil" },
+    { path: "/chat", label: "Mensagens" },
   ];
 
   const navRole = role === "student" ? navItemsStudents : navItemsProfessionals;

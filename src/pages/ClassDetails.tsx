@@ -12,7 +12,14 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { MapPin, Clock, Users, User, MessageSquare } from "lucide-react";
+import {
+  MapPin,
+  Clock,
+  Users,
+  User,
+  MessageSquare,
+  MessageCircle,
+} from "lucide-react";
 
 const ClassDetails = () => {
   const { id } = useParams();
@@ -285,10 +292,24 @@ const ClassDetails = () => {
               </div>
 
               {professional && (
-                <div className="flex items-center gap-3">
-                  <User className="h-5 w-5 text-muted-foreground" />
-                  <span className="font-medium">Professor:</span>
-                  <span>{professional.full_name}</span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <User className="h-5 w-5 text-muted-foreground" />
+                    <span className="font-medium">Professor:</span>
+                    <span>{professional.full_name}</span>
+                  </div>
+                  {isEnrolled && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        navigate(`/chat?contact=${professional.user_id}`)
+                      }
+                    >
+                      <MessageCircle className="h-4 w-4 mr-2" />
+                      Chat
+                    </Button>
+                  )}
                 </div>
               )}
 

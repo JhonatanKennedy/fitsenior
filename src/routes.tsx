@@ -14,6 +14,7 @@ import Financial from "./pages/Financial";
 import NotFound from "./pages/NotFound";
 import { ProtectedRoute } from "@/components/protectedRoute";
 import Profile from "./pages/Profile";
+import PrivateChat from "./pages/PrivateChat";
 
 export function Routes() {
   return (
@@ -111,6 +112,15 @@ export function Routes() {
         element={
           <ProtectedRoute>
             <Profile />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/chat"
+        element={
+          <ProtectedRoute>
+            <PrivateChat />
           </ProtectedRoute>
         }
       />

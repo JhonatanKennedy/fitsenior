@@ -385,6 +385,34 @@ CREATE POLICY "Anyone can view avatars"
   TO public
   USING (bucket_id = 'avatars');
 
+
+-- Create private_messages table for one-on-one conversations
+CREATE TABLE public.private_messages (
+  id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  sender_id uuid NOT NULL,
+  recipient_id uuid NOT NULL,
+  message text NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT now()
+);
+
+-- Enable RLS
+ALTER TABLE public.private_messages ENABLE ROW LEVEL SECURITY;
+
+-- Users can view messages where they are sender or recipient
+CREATE POLICY "Users can view their messages"
+ON public.private_messages
+FOR SELECT
+USING (auth.uid() = sender_id OR auth.uid() = recipient_id);
+
+-- Users can send messages
+CREATE POLICY "Users can send messages"
+ON public.private_messages
+FOR INSERT
+WITH CHECK (auth.uid() = sender_id);
+
+-- Enable realtime
+ALTER PUBLICATION supabase_realtime ADD TABLE public.private_messages;
+
 -- Insert sample demands
 INSERT INTO public.demands (activity, neighborhood, schedule, num_interested, location) VALUES
   ('Yoga', 'Centro', 'Segunda e Quarta, 8h às 9h', 12, 'Parque Central'),
