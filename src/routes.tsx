@@ -13,6 +13,7 @@ import MyClasses from "./pages/MyClasses";
 import Financial from "./pages/Financial";
 import NotFound from "./pages/NotFound";
 import { ProtectedRoute } from "@/components/protectedRoute";
+import Profile from "./pages/Profile";
 
 export function Routes() {
   return (
@@ -101,6 +102,15 @@ export function Routes() {
         element={
           <ProtectedRoute>
             <StudentRegistration />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/perfil"
+        element={
+          <ProtectedRoute>
+            <Profile />
           </ProtectedRoute>
         }
       />

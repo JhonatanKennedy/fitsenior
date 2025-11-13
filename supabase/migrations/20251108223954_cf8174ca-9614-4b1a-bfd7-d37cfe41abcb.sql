@@ -81,6 +81,7 @@ CREATE TABLE public.professionals (
   birth_date DATE NOT NULL,
   specialty TEXT NOT NULL,
   cpf TEXT NOT NULL UNIQUE,
+  avatar_url TEXT,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
@@ -115,6 +116,7 @@ CREATE TABLE public.students (
   address TEXT NOT NULL,
   birth_date DATE NOT NULL,
   health_certificate_url TEXT,
+  avatar_url TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
@@ -348,9 +350,44 @@ CREATE POLICY "Users can update their own health certificate"
     AND auth.uid()::text = (storage.foldername(name))[1]
   );
 
+-- Create storage bucket for avatars
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('avatars', 'avatars', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Storage policies for avatars
+CREATE POLICY "Users can upload their own avatar"
+  ON storage.objects FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    bucket_id = 'avatars' 
+    AND (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+CREATE POLICY "Users can update their own avatar"
+  ON storage.objects FOR UPDATE
+  TO authenticated
+  USING (
+    bucket_id = 'avatars' 
+    AND (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+CREATE POLICY "Users can delete their own avatar"
+  ON storage.objects FOR DELETE
+  TO authenticated
+  USING (
+    bucket_id = 'avatars' 
+    AND (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+CREATE POLICY "Anyone can view avatars"
+  ON storage.objects FOR SELECT
+  TO public
+  USING (bucket_id = 'avatars');
+
 -- Insert sample demands
 INSERT INTO public.demands (activity, neighborhood, schedule, num_interested, location) VALUES
   ('Yoga', 'Centro', 'Segunda e Quarta, 8h às 9h', 12, 'Parque Central'),
   ('Pilates', 'Jardim das Flores', 'Terça e Quinta, 15h às 16h', 8, 'Academia FlexFit'),
   ('Hidroginástica', 'Vila Nova', 'Segunda, Quarta e Sexta, 10h às 11h', 15, 'Clube Aquático')
-ON CONFLICT DO NOTHING
+ON CONFLICT DO NOTHING;
