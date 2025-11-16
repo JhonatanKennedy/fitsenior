@@ -123,17 +123,23 @@ const StudentRegistration = () => {
         }
       }
 
-      const { error: studentError } = await supabase.from("students").insert({
-        user_id: user.id,
-        full_name: formData.fullName,
-        gender: formData.gender,
-        phone: formData.phone,
-        email: formData.email,
-        cpf: formData.cpf,
-        address: formData.address,
-        birth_date: formData.birthDate,
-        health_certificate_url: certificateUrl,
-      });
+      // Mudei de .insert() para .upsert()
+      const { error: studentError } = await supabase
+        .from("students")
+        .upsert(
+          {
+            user_id: user.id,
+            full_name: formData.fullName,
+            gender: formData.gender,
+            phone: formData.phone,
+            email: formData.email,
+            cpf: formData.cpf,
+            address: formData.address,
+            birth_date: formData.birthDate,
+            health_certificate_url: certificateUrl,
+          },
+          { onConflict: "user_id" }
+        );
 
       if (studentError) throw studentError;
 
