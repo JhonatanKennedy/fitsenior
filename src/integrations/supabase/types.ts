@@ -48,55 +48,65 @@ export type Database = {
       };
       classes: {
         Row: {
-          activity: string;
-          created_at: string | null;
-          demand_id: string | null;
-          description: string | null;
           id: string;
-          location: string;
+          instructor_id: string | null; // Mantém por compatibilidade
+          professional_id: string; // Nova coluna
+          title: string;
+          description: string | null;
+          date: string;
+          duration: number | null;
+          capacity: number;
+          location: string | null;
+          category: string | null;
+          level: "beginner" | "intermediate" | "advanced" | null;
+          activity: string | null;
+          schedule: string | null;
           max_students: number;
-          price: number | null;
-          professional_id: string;
-          schedule: string;
+          created_at: string;
+          updated_at: string;
         };
         Insert: {
-          activity: string;
-          created_at?: string | null;
-          demand_id?: string | null;
-          description?: string | null;
           id?: string;
-          location: string;
-          max_students: number;
-          price?: number | null;
+          instructor_id?: string | null;
           professional_id: string;
-          schedule: string;
+          title: string;
+          description?: string | null;
+          date: string;
+          duration?: number | null;
+          capacity?: number;
+          location?: string | null;
+          category?: string | null;
+          level?: "beginner" | "intermediate" | "advanced" | null;
+          activity?: string | null;
+          schedule?: string | null;
+          max_students?: number;
+          created_at?: string;
+          updated_at?: string;
         };
         Update: {
-          activity?: string;
-          created_at?: string | null;
-          demand_id?: string | null;
-          description?: string | null;
           id?: string;
-          location?: string;
-          max_students?: number;
-          price?: number | null;
+          instructor_id?: string | null;
           professional_id?: string;
-          schedule?: string;
+          title?: string;
+          description?: string | null;
+          date?: string;
+          duration?: number | null;
+          capacity?: number;
+          location?: string | null;
+          category?: string | null;
+          level?: "beginner" | "intermediate" | "advanced" | null;
+          activity?: string | null;
+          schedule?: string | null;
+          max_students?: number;
+          created_at?: string;
+          updated_at?: string;
         };
         Relationships: [
           {
-            foreignKeyName: "classes_demand_id_fkey";
-            columns: ["demand_id"];
-            isOneToOne: false;
-            referencedRelation: "demands";
-            referencedColumns: ["id"];
-          },
-          {
             foreignKeyName: "classes_professional_id_fkey";
             columns: ["professional_id"];
-            isOneToOne: false;
             referencedRelation: "professionals";
-            referencedColumns: ["id"];
+            referencedColumns: ["user_id"];
           }
         ];
       };
@@ -132,33 +142,47 @@ export type Database = {
       };
       enrollments: {
         Row: {
-          class_id: string;
-          created_at: string | null;
           id: string;
-          status: string | null;
-          student_id: string;
+          user_id: string;
+          class_id: string;
+          student_id: string | null;
+          status: "enrolled" | "cancelled" | "completed";
+          created_at: string;
         };
         Insert: {
-          class_id: string;
-          created_at?: string | null;
           id?: string;
-          status?: string | null;
-          student_id: string;
+          user_id: string;
+          class_id: string;
+          student_id?: string | null;
+          status?: "enrolled" | "cancelled" | "completed";
+          created_at?: string;
         };
         Update: {
-          class_id?: string;
-          created_at?: string | null;
           id?: string;
-          status?: string | null;
-          student_id?: string;
+          user_id?: string;
+          class_id?: string;
+          student_id?: string | null;
+          status?: "enrolled" | "cancelled" | "completed";
+          created_at?: string;
         };
         Relationships: [
           {
+            foreignKeyName: "enrollments_user_id_fkey";
+            columns: ["user_id"];
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
             foreignKeyName: "enrollments_class_id_fkey";
             columns: ["class_id"];
-            isOneToOne: false;
             referencedRelation: "classes";
             referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "enrollments_student_id_fkey";
+            columns: ["student_id"];
+            referencedRelation: "students";
+            referencedColumns: ["user_id"];
           }
         ];
       };
@@ -265,37 +289,55 @@ export type Database = {
       };
       professionals: {
         Row: {
-          avatar_url: string | null;
-          birth_date: string;
-          cpf: string;
-          created_at: string | null;
-          cref: string;
-          full_name: string;
           id: string;
-          specialty: string;
           user_id: string;
+          full_name: string;
+          email: string | null;
+          phone: string | null;
+          cpf: string | null;
+          cref: string; // ✅ Adicione
+          address: string | null;
+          birth_date: string | null; 
+          gender: string | null; 
+          specialty: string | null;
+          bio: string | null;
+          avatar_url: string | null;
+          created_at: string;
+          updated_at: string;
         };
         Insert: {
-          avatar_url?: string | null;
-          birth_date: string;
-          cpf: string;
-          created_at?: string | null;
-          cref: string;
-          full_name: string;
           id?: string;
-          specialty: string;
           user_id: string;
+          full_name: string;
+          email?: string | null;
+          phone?: string | null;
+          cpf?: string | null;
+          cref: string; // ✅ Adicione
+          address?: string | null;
+          birth_date?: string | null; 
+          gender?: string | null; 
+          specialty?: string | null;
+          bio?: string | null;
+          avatar_url?: string | null;
+          created_at?: string;
+          updated_at?: string;
         };
         Update: {
-          avatar_url?: string | null;
-          birth_date?: string;
-          cpf?: string;
-          created_at?: string | null;
-          cref?: string;
-          full_name?: string;
           id?: string;
-          specialty?: string;
           user_id?: string;
+          full_name?: string;
+          email?: string | null;
+          phone?: string | null;
+          cpf?: string | null;
+          cref?: string; // ✅ Adicione
+          address?: string | null;
+          birth_date?: string | null; 
+          gender?: string | null; 
+          specialty?: string | null;
+          bio?: string | null;
+          avatar_url?: string | null;
+          created_at?: string;
+          updated_at?: string;
         };
         Relationships: [];
       };

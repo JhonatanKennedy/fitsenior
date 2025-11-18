@@ -78,14 +78,6 @@ const ProfessionalRegistration = () => {
 
       if (profError) throw profError;
 
-      // Add professional role
-      const { error: roleError } = await supabase.from("user_roles").insert({
-        user_id: userId,
-        role: "professional",
-      });
-
-      if (roleError) throw roleError;
-
       toast({
         title: "Cadastro completo!",
         description: "Seu perfil profissional foi criado com sucesso.",
