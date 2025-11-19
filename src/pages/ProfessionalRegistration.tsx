@@ -4,9 +4,21 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { GraduationCap, User, Calendar, FileText, CreditCard } from "lucide-react";
+import {
+  GraduationCap,
+  User,
+  Calendar,
+  FileText,
+  CreditCard,
+} from "lucide-react";
 
 const ProfessionalRegistration = () => {
   const navigate = useNavigate();
@@ -23,7 +35,9 @@ const ProfessionalRegistration = () => {
 
   useEffect(() => {
     const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
         navigate("/auth");
         return;
@@ -53,28 +67,16 @@ const ProfessionalRegistration = () => {
 
     try {
       // Insert professional data
-      const { error: profError } = await supabase
-        .from("professionals")
-        .insert({
-          user_id: userId,
-          cref: formData.cref,
-          full_name: formData.fullName,
-          birth_date: formData.birthDate,
-          specialty: formData.specialty,
-          cpf: formData.cpf,
-        });
+      const { error: profError } = await supabase.from("professionals").insert({
+        user_id: userId,
+        cref: formData.cref,
+        full_name: formData.fullName,
+        birth_date: formData.birthDate,
+        specialty: formData.specialty,
+        cpf: formData.cpf,
+      });
 
       if (profError) throw profError;
-
-      // Add professional role
-      const { error: roleError } = await supabase
-        .from("user_roles")
-        .insert({
-          user_id: userId,
-          role: "professional",
-        });
-
-      if (roleError) throw roleError;
 
       toast({
         title: "Cadastro completo!",
@@ -192,7 +194,12 @@ const ProfessionalRegistration = () => {
                   />
                 </div>
 
-                <Button type="submit" size="lg" className="w-full text-lg" disabled={loading}>
+                <Button
+                  type="submit"
+                  size="lg"
+                  className="w-full text-lg"
+                  disabled={loading}
+                >
                   {loading ? "Salvando..." : "Concluir Cadastro"}
                 </Button>
               </form>

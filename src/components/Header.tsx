@@ -1,39 +1,35 @@
 import { Button } from "@/components/ui/button";
 import { Heart, Menu, X } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useAuth } from "@/context/auth";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [user, setUser] = useState(null);
+  const { user, role } = useAuth();
   const location = useLocation();
 
-  useEffect(() => {
-    // Verifica sessão inicial
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
-
-    // Escuta mudanças de autenticação
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const navItems = [
+  const navItemsUnauth = [
     { path: "/", label: "Início" },
-    { path: "/buscar-aulas", label: "Buscar Aulas" },
-    { path: "/cadastrar-aulas", label: "Para Profissionais" },
-    {
-      path: user ? "/dashboard" : "/auth",
-      label: user ? "Dashboard" : "Login",
-    },
+    { path: "/auth", label: "Login" },
   ];
+
+  const navItemsStudents = [
+    { path: "/minhas-turmas", label: "Minhas Turmas" },
+    { path: "/buscar-aulas", label: "Buscar Aulas" },
+    { path: "/perfil", label: "Perfil" },
+    { path: "/chat", label: "Mensagens" },
+  ];
+
+  const navItemsProfessionals = [
+    { path: "/cadastrar-aulas", label: "Cadastrar aula" },
+    { path: "/dashboard", label: "Dashboard" },
+    { path: "/perfil", label: "Perfil" },
+    { path: "/chat", label: "Mensagens" },
+  ];
+
+  const navRole = role === "student" ? navItemsStudents : navItemsProfessionals;
+  const navItems = user ? navRole : navItemsUnauth;
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -41,14 +37,14 @@ const Header = () => {
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b shadow-soft">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          <Link to="/" className="flex items-center gap-2 group">
+          <div className="flex items-center gap-2 group">
             <div className="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center group-hover:scale-110 transition-transform">
               <Heart className="w-6 h-6 text-primary-foreground" />
             </div>
             <span className="text-2xl font-bold">
               Fit<span className="text-primary">Sênior</span>
             </span>
-          </Link>
+          </div>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-1">
