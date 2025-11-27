@@ -64,9 +64,10 @@ const CreateClass = () => {
         return;
       }
 
+      // ✅ CORREÇÃO 1: Busca user_id em vez de id
       const { data: prof } = await supabase
         .from("professionals")
-        .select("id")
+        .select("user_id")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -75,7 +76,7 @@ const CreateClass = () => {
         return;
       }
 
-      setProfessionalId(prof.id);
+      setProfessionalId(prof.user_id); // ✅ Usa user_id
     };
 
     checkAuth();
@@ -102,15 +103,18 @@ const CreateClass = () => {
     setLoading(true);
 
     try {
+     
       const { error } = await supabase.from("classes").insert({
-        professional_id: professionalId,
-        activity: formData.title,
+        professional_id: professionalId, //  Campo correto
+        title: formData.title,
         description: formData.description,
-        schedule: formData.schedule,
-        max_students: parseInt(formData.maxStudents) || 10,
+        date: new Date().toISOString(), //  Data atual
+        capacity: parseInt(formData.maxStudents) || 10,
         location: formData.location,
-        price: parseFloat(formData.price) || 0,
-        demand_id: demandData?.demandId || null,
+        category: formData.category,
+        level: formData.level as "beginner" | "intermediate" | "advanced",
+        activity: formData.title, // Campo obrigatório
+        schedule: formData.schedule, //  Campo obrigatório
       });
 
       if (error) throw error;

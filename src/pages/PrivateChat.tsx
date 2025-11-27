@@ -6,20 +6,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Send, ArrowLeft, User } from "lucide-react";
+import { Tables } from "@/integrations/supabase/types";
+
+type Message = Tables<"private_messages">;
 
 interface Contact {
   id: string;
   name: string;
   type: "student" | "professional";
-  avatar_url: string;
-}
-
-interface Message {
-  id: string;
-  sender_id: string;
-  recipient_id: string;
-  message: string;
-  created_at: string;
+  avatar_url: string | null;
 }
 
 const PrivateChat = () => {
@@ -77,16 +72,15 @@ const PrivateChat = () => {
 
       setCurrentUserId(user.id);
 
-      // Check if user is student or professional
       const { data: studentData } = await supabase
         .from("students")
-        .select("id")
+        .select("user_id")
         .eq("user_id", user.id)
         .maybeSingle();
 
       const { data: professionalData } = await supabase
         .from("professionals")
-        .select("id")
+        .select("user_id")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -95,7 +89,7 @@ const PrivateChat = () => {
         await fetchStudentContacts(user.id);
       } else if (professionalData) {
         setUserType("professional");
-        await fetchProfessionalContacts(professionalData.id);
+        await fetchProfessionalContacts(professionalData.user_id);
       }
     } catch (error: any) {
       toast({
@@ -108,88 +102,118 @@ const PrivateChat = () => {
     }
   };
 
+  // ✅ CORREÇÃO: Query simplificada sem join complexo
   const fetchStudentContacts = async (userId: string) => {
-    // Get all professionals from classes the student is enrolled in
-    const { data: enrollments, error } = await supabase
-      .from("enrollments")
-      .select(
-        `
-        classes (
-          professional_id,
-          professionals (
-            user_id,
-            full_name,
-            avatar_url
-          )
-        )
-      `
-      )
-      .eq("student_id", userId)
-      .eq("status", "active");
+    try {
+      // Busca as aulas que o aluno está inscrito
+      const { data: enrollments, error: enrollError } = await supabase
+        .from("enrollments")
+        .select("class_id")
+        .eq("student_id", userId)
+        .eq("status", "active");
 
-    if (error) throw error;
+      if (enrollError) throw enrollError;
 
-    const contactsList: Contact[] = [];
-    const seenIds = new Set();
+      if (!enrollments || enrollments.length === 0) {
+        setContacts([]);
+        return;
+      }
 
-    enrollments?.forEach((enrollment: any) => {
-      const prof = enrollment.classes?.professionals;
-      if (prof && !seenIds.has(prof.user_id)) {
-        seenIds.add(prof.user_id);
-        contactsList.push({
+      const classIds = enrollments.map((e) => e.class_id);
+
+      // Busca as aulas e seus professional_id
+      const { data: classes, error: classError } = await supabase
+        .from("classes")
+        .select("professional_id")
+        .in("id", classIds);
+
+      if (classError) throw classError;
+
+      const professionalIds = [
+        ...new Set(classes?.map((c) => c.professional_id) || []),
+      ];
+
+      if (professionalIds.length === 0) {
+        setContacts([]);
+        return;
+      }
+
+      // Busca os dados dos profissionais
+      const { data: professionals, error: profError } = await supabase
+        .from("professionals")
+        .select("user_id, full_name, avatar_url")
+        .in("user_id", professionalIds);
+
+      if (profError) throw profError;
+
+      const contactsList: Contact[] =
+        professionals?.map((prof) => ({
           id: prof.user_id,
           name: prof.full_name,
-          type: "professional",
+          type: "professional" as const,
           avatar_url: prof.avatar_url,
-        });
-      }
-    });
+        })) || [];
 
-    setContacts(contactsList);
+      setContacts(contactsList);
+    } catch (error: any) {
+      console.error("Erro ao buscar contatos:", error);
+      setContacts([]);
+    }
   };
 
-  const fetchProfessionalContacts = async (professionalId: string) => {
-    // Get all students enrolled in professional's classes
-    const { data: enrollments, error } = await supabase
-      .from("enrollments")
-      .select(
-        `
-        student_id,
-        classes!inner (
-          professional_id
-        )
-      `
-      )
-      .eq("classes.professional_id", professionalId)
-      .eq("status", "active");
+  const fetchProfessionalContacts = async (professionalUserId: string) => {
+    try {
+      const { data: classes, error: classesError } = await supabase
+        .from("classes")
+        .select("id")
+        .eq("professional_id", professionalUserId);
 
-    if (error) throw error;
+      if (classesError) throw classesError;
 
-    // Now get student details separately
-    const studentIds = enrollments?.map((e: any) => e.student_id) || [];
-    const uniqueStudentIds = [...new Set(studentIds)];
+      if (!classes || classes.length === 0) {
+        setContacts([]);
+        return;
+      }
 
-    if (uniqueStudentIds.length === 0) {
+      const classIds = classes.map((c) => c.id);
+
+      const { data: enrollments, error } = await supabase
+        .from("enrollments")
+        .select("student_id")
+        .in("class_id", classIds)
+        .eq("status", "active");
+
+      if (error) throw error;
+
+      const studentIds = [
+        ...new Set(enrollments?.map((e: any) => e.student_id) || []),
+      ];
+
+      if (studentIds.length === 0) {
+        setContacts([]);
+        return;
+      }
+
+      const { data: students, error: studentsError } = await supabase
+        .from("students")
+        .select("user_id, full_name, avatar_url")
+        .in("user_id", studentIds);
+
+      if (studentsError) throw studentsError;
+
+      const contactsList: Contact[] =
+        students?.map((student) => ({
+          id: student.user_id,
+          name: student.full_name,
+          type: "student" as const,
+          avatar_url: student.avatar_url,
+        })) || [];
+
+      setContacts(contactsList);
+    } catch (error: any) {
+      console.error("Erro ao buscar contatos:", error);
       setContacts([]);
-      return;
     }
-
-    const { data: students, error: studentsError } = await supabase
-      .from("students")
-      .select("user_id, full_name, avatar_url")
-      .in("user_id", uniqueStudentIds);
-
-    if (studentsError) throw studentsError;
-
-    const contactsList: Contact[] =
-      students?.map((student) => ({
-        id: student.user_id,
-        name: student.full_name,
-        type: "student" as const,
-        avatar_url: student.avatar_url,
-      })) || [];
-
-    setContacts(contactsList);
   };
 
   const fetchMessages = async () => {
@@ -208,7 +232,17 @@ const PrivateChat = () => {
       return;
     }
 
-    setMessages(data || []);
+    setMessages((data as Message[] | null) ?? []);
+
+    // Marca mensagens como lidas
+    if (data && data.length > 0) {
+      await supabase
+        .from("private_messages")
+        .update({ read: true })
+        .eq("recipient_id", currentUserId)
+        .eq("sender_id", selectedContact.id)
+        .eq("read", false);
+    }
   };
 
   const subscribeToMessages = () => {
@@ -243,20 +277,21 @@ const PrivateChat = () => {
 
     setSending(true);
     try {
+      // ✅ CORREÇÃO: Campo 'content' em vez de 'message'
       const { error } = await supabase.from("private_messages").insert({
         sender_id: currentUserId,
         recipient_id: selectedContact.id,
-        message: newMessage.trim(),
+        content: newMessage.trim(),
       });
 
       if (error) throw error;
 
-      // Add message locally
       const newMsg: Message = {
         id: crypto.randomUUID(),
         sender_id: currentUserId,
         recipient_id: selectedContact.id,
-        message: newMessage.trim(),
+        content: newMessage.trim(),
+        read: false,
         created_at: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, newMsg]);
@@ -273,7 +308,11 @@ const PrivateChat = () => {
   };
 
   if (loading) {
-    return <div className="container py-12">Carregando...</div>;
+    return (
+      <div className="container py-12 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
   return (
@@ -285,7 +324,6 @@ const PrivateChat = () => {
         </Button>
 
         <div className="grid md:grid-cols-[300px_1fr] gap-4 h-[600px]">
-          {/* Contacts List */}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">
@@ -309,23 +347,23 @@ const PrivateChat = () => {
                     >
                       {contact.avatar_url ? (
                         <img
-                          className="h-7 w-7 text-muted-foreground rounded-full"
+                          className="h-8 w-8 rounded-full object-cover"
                           src={contact.avatar_url}
-                          alt={`photo-of-${contact.name}`}
+                          alt={contact.name}
                         />
                       ) : (
-                        <User className="h-5 w-5 text-muted-foreground" />
+                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                          <User className="h-4 w-4 text-primary" />
+                        </div>
                       )}
-
                       <span className="font-medium">{contact.name}</span>
                     </button>
                   ))
-                )}
+                }
               </div>
             </CardContent>
           </Card>
 
-          {/* Messages Area */}
           <Card className="flex flex-col">
             {selectedContact ? (
               <>
@@ -333,12 +371,14 @@ const PrivateChat = () => {
                   <CardTitle className="flex items-center gap-2">
                     {selectedContact.avatar_url ? (
                       <img
-                        className="h-8 w-8 text-muted-foreground rounded-full"
+                        className="h-8 w-8 rounded-full object-cover"
                         src={selectedContact.avatar_url}
-                        alt={`photo-of-${selectedContact.name}`}
+                        alt={selectedContact.name}
                       />
                     ) : (
-                      <User className="h-5 w-5" />
+                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        <User className="h-5 w-5 text-primary" />
+                      </div>
                     )}
                     {selectedContact.name}
                   </CardTitle>
@@ -365,7 +405,7 @@ const PrivateChat = () => {
                               : "bg-muted"
                           }`}
                         >
-                          <p className="text-sm">{msg.message}</p>
+                          <p className="text-sm">{msg.content}</p>
                           <span className="text-xs opacity-70">
                             {new Date(msg.created_at).toLocaleTimeString(
                               "pt-BR",
@@ -378,7 +418,7 @@ const PrivateChat = () => {
                         </div>
                       </div>
                     ))
-                  )}
+                  }
                   <div ref={messagesEndRef} />
                 </CardContent>
                 <div className="border-t p-4">

@@ -58,10 +58,11 @@ const ClassDetails = () => {
       if (classError) throw classError;
       setClassData(classInfo);
 
+      
       const { data: profData, error: profError } = await supabase
         .from("professionals")
         .select("*")
-        .eq("id", classInfo.professional_id)
+        .eq("user_id", classInfo.professional_id)
         .single();
 
       if (profError) throw profError;
@@ -91,7 +92,7 @@ const ClassDetails = () => {
         .from("enrollments")
         .select("id, student_id")
         .eq("class_id", id)
-        .eq("status", "active");
+        .eq("status", "enrolled");
 
       if (enrollError) throw enrollError;
 
@@ -213,9 +214,10 @@ const ClassDetails = () => {
       if (!user) throw new Error("Usuário não autenticado");
 
       const { error } = await supabase.from("enrollments").insert({
+        user_id: user.id,
         class_id: id,
         student_id: user.id,
-        status: "active",
+        status: "enrolled",
       });
 
       if (error) throw error;

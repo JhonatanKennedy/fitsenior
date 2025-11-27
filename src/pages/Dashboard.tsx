@@ -19,28 +19,15 @@ import {
   BookOpen,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Tables } from "@/integrations/supabase/types";
+
+type ClassData = Tables<"classes"> & {
+  enrollments: { count: number }[];
+};
 
 interface Professional {
   id: string;
   full_name: string;
-}
-
-interface ClassData {
-  id: string;
-  activity: string;
-  schedule: string;
-  location: string;
-  price: number;
-  enrollments: { count: number }[];
-}
-
-interface Demand {
-  id: string;
-  activity: string;
-  neighborhood: string;
-  schedule: string;
-  num_interested: number;
-  location: string;
 }
 
 const Dashboard = () => {
@@ -73,7 +60,7 @@ const Dashboard = () => {
       }
 
       setProfessional(prof);
-      await loadData(prof.id);
+      await loadData(prof.user_id);
     };
 
     checkAuth();
@@ -120,7 +107,7 @@ const Dashboard = () => {
 
   const totalRevenue = classes.reduce((sum, cls) => {
     const students = cls.enrollments[0]?.count || 0;
-    return sum + cls.price * students;
+    return sum + students * (cls.max_students ? cls.capacity : 0); // ou adapte ao campo correto
   }, 0);
 
   const totalStudents = classes.reduce((sum, cls) => {
@@ -249,7 +236,7 @@ const Dashboard = () => {
                   </CardContent>
                 </Card>
               ))
-            )}
+            }
           </TabsContent>
 
           <TabsContent value="demands" className="space-y-4">

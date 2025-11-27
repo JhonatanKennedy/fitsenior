@@ -20,12 +20,22 @@ import {
   BellOff,
   MessageCircle,
 } from "lucide-react";
+import { Tables } from "@/integrations/supabase/types";
+
+type ClassPreview = Pick<
+  Tables<"classes">,
+  "id" | "activity" | "schedule" | "location" | "description"
+>;
+
+type EnrollmentWithClass = Tables<"enrollments"> & {
+  classes: ClassPreview | null;
+};
 
 const MyClasses = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
-  const [enrolledClasses, setEnrolledClasses] = useState<any[]>([]);
+  const [enrolledClasses, setEnrolledClasses] = useState<ClassPreview[]>([]);
   const [notifications, setNotifications] = useState<{
     [key: string]: boolean;
   }>({});
@@ -52,12 +62,11 @@ const MyClasses = () => {
           `
           id,
           class_id,
-          classes (
+          classes(
             id,
             activity,
             schedule,
             location,
-            max_students,
             description
           )
         `
@@ -68,10 +77,9 @@ const MyClasses = () => {
       if (enrollError) throw enrollError;
 
       const classesData =
-        enrollments?.map((e: any) => ({
-          enrollmentId: e.id,
-          ...e.classes,
-        })) || [];
+        (enrollments as EnrollmentWithClass[] | null)?.flatMap((enrollment) =>
+          enrollment.classes ? [enrollment.classes] : []
+        ) ?? [];
 
       setEnrolledClasses(classesData);
 

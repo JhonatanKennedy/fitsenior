@@ -97,7 +97,7 @@ const ClassManagement = () => {
         .from("enrollments")
         .select("id, student_id")
         .eq("class_id", id)
-        .eq("status", "active");
+        .eq("status", "enrolled");
 
       if (enrollError) throw enrollError;
 
@@ -188,7 +188,7 @@ const ClassManagement = () => {
         .from("enrollments")
         .select("id, student_id")
         .eq("class_id", id)
-        .eq("status", "active");
+        .eq("status", "enrolled");
 
       if (enrollError) throw enrollError;
 

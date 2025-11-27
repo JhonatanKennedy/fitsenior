@@ -67,29 +67,36 @@ export default function Profile() {
       return;
     }
 
-    // Check user role
-    const { data: roles } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", session.user.id);
+    // ✅ Verifica se é student
+    const { data: studentData } = await supabase
+      .from("students")
+      .select("*")
+      .eq("user_id", session.user.id)
+      .maybeSingle();
 
-    if (!roles || roles.length === 0) {
-      navigate("/");
+    if (studentData) {
+      setUserRole("student");
+      setStudentData(studentData);
+      setLoading(false);
       return;
     }
 
-    const role = roles.find(
-      (r) => r.role === "student" || r.role === "professional"
-    )?.role;
+    // ✅ Verifica se é professional
+    const { data: professionalData } = await supabase
+      .from("professionals")
+      .select("*")
+      .eq("user_id", session.user.id)
+      .maybeSingle();
 
-    if (role === "student") {
-      setUserRole("student");
-      await loadStudentData(session.user.id);
-    } else if (role === "professional") {
+    if (professionalData) {
       setUserRole("professional");
-      await loadProfessionalData(session.user.id);
+      setProfessionalData(professionalData);
+      setLoading(false);
+      return;
     }
 
+    // ✅ Se não for nenhum dos dois, redireciona
+    navigate("/");
     setLoading(false);
   };
 
@@ -534,10 +541,7 @@ export default function Profile() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label
-                    htmlFor="specialty"
-                    className="flex items-center gap-2"
-                  >
+                  <Label htmlFor="specialty" className="flex items-center gap-2">
                     <Award className="h-4 w-4" />
                     Especialidade
                   </Label>

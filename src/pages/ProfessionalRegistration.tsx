@@ -24,6 +24,7 @@ const ProfessionalRegistration = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [checking, setChecking] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     cref: "",
@@ -35,29 +36,49 @@ const ProfessionalRegistration = () => {
 
   useEffect(() => {
     const checkUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
-        navigate("/auth");
-        return;
-      }
-      setUserId(user.id);
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
 
-      // Check if professional profile already exists
-      const { data: professional } = await supabase
-        .from("professionals")
-        .select("*")
-        .eq("user_id", user.id)
-        .maybeSingle();
+        if (!user) {
+          navigate("/auth");
+          return;
+        }
 
-      if (professional) {
-        navigate("/dashboard");
+        setUserId(user.id);
+
+        // Check if professional profile already exists
+        const { data: professional, error } = await supabase
+          .from("professionals")
+          .select("*")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (error) {
+          console.error("Erro ao verificar profissional:", error);
+        }
+
+        if (professional) {
+          toast({
+            title: "Perfil já existe",
+            description:
+              "Você já completou seu cadastro profissional. Redirecionando para o perfil...",
+          });
+          // ✅ Mudança aqui: redireciona para /profile
+          navigate("/profile");
+          return;
+        }
+
+        setChecking(false);
+      } catch (error) {
+        console.error("Erro na verificação:", error);
+        setChecking(false);
       }
     };
 
     checkUser();
-  }, [navigate]);
+  }, [navigate, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,15 +87,19 @@ const ProfessionalRegistration = () => {
     setLoading(true);
 
     try {
-      // Insert professional data
-      const { error: profError } = await supabase.from("professionals").insert({
-        user_id: userId,
-        cref: formData.cref,
-        full_name: formData.fullName,
-        birth_date: formData.birthDate,
-        specialty: formData.specialty,
-        cpf: formData.cpf,
-      });
+      const { error: profError } = await supabase
+        .from("professionals")
+        .upsert(
+          {
+            user_id: userId,
+            cref: formData.cref,
+            full_name: formData.fullName,
+            birth_date: formData.birthDate,
+            specialty: formData.specialty,
+            cpf: formData.cpf,
+          },
+          { onConflict: "user_id" }
+        );
 
       if (profError) throw profError;
 
@@ -83,8 +108,10 @@ const ProfessionalRegistration = () => {
         description: "Seu perfil profissional foi criado com sucesso.",
       });
 
-      navigate("/dashboard");
+      // ✅ Mudança aqui: redireciona para /profile após cadastro
+      navigate("/profile");
     } catch (error: any) {
+      console.error("Erro no cadastro:", error);
       toast({
         title: "Erro no cadastro",
         description: error.message,
@@ -98,6 +125,17 @@ const ProfessionalRegistration = () => {
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
+
+  if (checking) {
+    return (
+      <div className="min-h-screen bg-gradient-hero flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-lg">Verificando cadastro...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-hero">

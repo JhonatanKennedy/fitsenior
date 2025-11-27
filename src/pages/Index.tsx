@@ -37,15 +37,32 @@ const Index = () => {
         return;
       }
 
-      const { data: roleData } = await supabase
-        .from("user_roles")
-        .select("role")
+      // ✅ Verifica se é student
+      const { data: studentData } = await supabase
+        .from("students")
+        .select("id")
         .eq("user_id", session.user.id)
         .maybeSingle();
 
-      if (!roleData) {
-        setShowRoleSelection(true);
+      if (studentData) {
+        setLoading(false);
+        return; // Já tem perfil, não mostra seleção
       }
+
+      // ✅ Verifica se é professional
+      const { data: professionalData } = await supabase
+        .from("professionals")
+        .select("id")
+        .eq("user_id", session.user.id)
+        .maybeSingle();
+
+      if (professionalData) {
+        setLoading(false);
+        return; // Já tem perfil, não mostra seleção
+      }
+
+      // ✅ Se não for nenhum dos dois, mostra seleção de papel
+      setShowRoleSelection(true);
     } catch (error) {
       console.error("Error checking role:", error);
     } finally {
