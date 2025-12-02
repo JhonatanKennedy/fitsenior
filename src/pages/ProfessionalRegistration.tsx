@@ -24,6 +24,7 @@ const ProfessionalRegistration = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [checking, setChecking] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     cref: "",
@@ -57,7 +58,7 @@ const ProfessionalRegistration = () => {
     };
 
     checkUser();
-  }, [navigate]);
+  }, [navigate, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,8 +84,10 @@ const ProfessionalRegistration = () => {
         description: "Seu perfil profissional foi criado com sucesso.",
       });
 
-      navigate("/dashboard");
+      // ✅ Mudança aqui: redireciona para /profile após cadastro
+      navigate("/profile");
     } catch (error: any) {
+      console.error("Erro no cadastro:", error);
       toast({
         title: "Erro no cadastro",
         description: error.message,
@@ -98,6 +101,17 @@ const ProfessionalRegistration = () => {
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
+
+  if (checking) {
+    return (
+      <div className="min-h-screen bg-gradient-hero flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-lg">Verificando cadastro...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-hero">
