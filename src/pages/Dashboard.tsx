@@ -206,7 +206,7 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
             ) : (
-              classes.map((cls) => (
+              classes.map((cls: ClassData) => (
                 <Card
                   key={cls.id}
                   className="shadow-soft hover:shadow-medium transition-shadow cursor-pointer"
@@ -236,7 +236,7 @@ const Dashboard = () => {
                   </CardContent>
                 </Card>
               ))
-            }
+            )}
           </TabsContent>
 
           <TabsContent value="demands" className="space-y-4">
