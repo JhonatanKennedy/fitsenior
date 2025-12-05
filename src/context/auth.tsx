@@ -41,14 +41,42 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
-    supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        setRole((data?.role as UserRole) ?? null);
-      });
+    const fetchRole = async () => {
+      // Verifica se é estudante
+      const { data: student } = await supabase
+        .from("students")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (student) {
+        setRole("student");
+        return;
+      }
+
+      // Verifica se é profissional
+      const { data: professional } = await supabase
+        .from("professionals")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (professional) {
+        setRole("professional");
+        return;
+      }
+
+      // Consulta tabela user_roles como fallback
+      const { data: userRole } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      setRole((userRole?.role as UserRole) ?? null);
+    };
+
+    fetchRole();
   }, [user]);
 
   const signOut = async () => {

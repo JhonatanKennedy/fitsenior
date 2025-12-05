@@ -1,0 +1,36 @@
+version: '3.9'
+
+services:
+  backend:
+    image: python:3.11-slim
+    working_dir: /app
+    volumes:
+      - ./backend:/app
+    env_file:
+      - docker-compose.env
+    command: bash -c "pip install --upgrade pip && pip install -r requirements.txt && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+
+  frontend:
+    image: node:20
+    working_dir: /app
+    volumes:
+      - ./:/app
+      - frontend-node-modules:/app/node_modules
+    env_file:
+      - docker-compose.env
+    environment:
+      NODE_ENV: development
+      VITE_API_URL: ${VITE_API_URL:-http://backend:8000}
+      VITE_SUPABASE_URL: ${SUPABASE_URL}
+      VITE_SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_ANON_KEY}
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 5173"
+    ports:
+      - "${FRONTEND_PORT:-5173}:5173"
+    depends_on:
+      - backend
+
+volumes:
+  frontend-node-modules:
+
