@@ -41,14 +41,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
+    // OPÇÃO 1: Buscar role da tabela students
     supabase
-      .from("user_roles")
-      .select("role")
+      .from("students")
+      .select("*")
       .eq("user_id", user.id)
       .maybeSingle()
       .then(({ data }) => {
-        setRole((data?.role as UserRole) ?? null);
+        // Se existir em students, é student
+        setRole(data ? "student" : null);
       });
+
+    // OPÇÃO 2: Ou simplesmente definir como student por padrão
+    // setRole("student");
   }, [user]);
 
   const signOut = async () => {
