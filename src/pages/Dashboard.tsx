@@ -60,7 +60,7 @@ const Dashboard = () => {
       }
 
       setProfessional(prof);
-      await loadData(prof.user_id);
+      await loadData(prof.id);
     };
 
     checkAuth();

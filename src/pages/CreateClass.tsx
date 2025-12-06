@@ -64,10 +64,10 @@ const CreateClass = () => {
         return;
       }
 
-      // ✅ CORREÇÃO 1: Busca user_id em vez de id
+      // Busca o id do profissional (não o user_id)
       const { data: prof } = await supabase
         .from("professionals")
-        .select("user_id")
+        .select("id")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -76,7 +76,7 @@ const CreateClass = () => {
         return;
       }
 
-      setProfessionalId(prof.user_id); // ✅ Usa user_id
+      setProfessionalId(prof.id); // Usa o id do profissional (não o user_id)
     };
 
     checkAuth();
